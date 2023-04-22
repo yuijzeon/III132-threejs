@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import * as THREE from 'three';
-import { onMounted, Ref, ref } from "vue";
+import { onMounted, ref, Ref } from "vue";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
-import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment";
+import { DragControls } from "three/examples/jsm/controls/DragControls";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment";
 
 const container: Ref<HTMLCanvasElement | undefined> = ref();
 
@@ -38,14 +39,30 @@ onMounted(() => {
 
   const loader = new GLTFLoader();
   loader.setDRACOLoader(dracoLoader);
-  loader.load('https://threejs.org/examples/models/gltf/LittlestTokyo.glb', function (gltf) {
-    const model = gltf.scene;
-    model.position.set(1, 1, 0);
-    model.scale.set(0.01, 0.01, 0.01);
+  loader.load('./public/model/scene.gltf', function (gltf) {
+    const model: THREE.Group = gltf.scene;
+    model.position.set(0, 0, 0);
+    model.scale.set(0.5, 0.5, 0.5);
     scene.add(model);
 
     mixer = new THREE.AnimationMixer(model);
     mixer.clipAction(gltf.animations[0]).play();
+
+    const dragControls = new DragControls(gltf.scene.children, camera, renderer.domElement);
+    // 開始拖曳
+    dragControls.addEventListener('dragstart', function () {
+      controls.enabled = false;
+    });
+    // 拖曳過程
+    dragControls.addEventListener('drag', function (event) {
+      const object: THREE.Mesh = event.object;
+      model.position.copy(object.position);
+      object.position.set(0, 0, 0);
+    });
+    // 拖曳結束
+    dragControls.addEventListener('dragend', function () {
+      controls.enabled = true;
+    });
 
     animate();
   }, undefined, function (e) {
