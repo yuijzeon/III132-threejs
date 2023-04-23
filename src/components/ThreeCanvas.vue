@@ -49,18 +49,22 @@ onMounted(() => {
     mixer.clipAction(gltf.animations[0]).play();
 
     const dragControls = new DragControls(gltf.scene.children, camera, renderer.domElement);
+    const modelBefore = new THREE.Vector3();
     // 開始拖曳
     dragControls.addEventListener('dragstart', function () {
+      modelBefore.copy(model.position);
       controls.enabled = false;
     });
     // 拖曳過程
     dragControls.addEventListener('drag', function (event) {
       const object: THREE.Mesh = event.object;
-      model.position.copy(object.position);
+      const offset = object.position.divide(new THREE.Vector3(2, 2, 2));
+      model.position.copy(new THREE.Vector3().copy(modelBefore).add(offset));
       object.position.set(0, 0, 0);
     });
     // 拖曳結束
     dragControls.addEventListener('dragend', function () {
+      modelBefore.set(0, 0, 0);
       controls.enabled = true;
     });
 
