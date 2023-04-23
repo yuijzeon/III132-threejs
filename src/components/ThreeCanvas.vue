@@ -1,31 +1,31 @@
 <script setup lang="ts">
-import * as THREE from 'three';
 import { onMounted, ref, Ref } from "vue";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
 import { DragControls } from "three/examples/jsm/controls/DragControls";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment";
+import { AnimationMixer, Clock, Color, Group, Mesh, PerspectiveCamera, PMREMGenerator, Scene, sRGBEncoding, Vector3, WebGLRenderer } from "three";
 
 const container: Ref<HTMLCanvasElement | undefined> = ref();
 
 onMounted(() => {
-  let mixer: THREE.AnimationMixer;
+  let mixer: AnimationMixer;
 
-  const clock = new THREE.Clock();
+  const clock = new Clock();
 
-  const renderer = new THREE.WebGLRenderer({ canvas: container.value, antialias: true });
+  const renderer = new WebGLRenderer({ canvas: container.value, antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.outputEncoding = sRGBEncoding;
 
-  const pmremGenerator = new THREE.PMREMGenerator(renderer);
+  const pmremGenerator = new PMREMGenerator(renderer);
 
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xbfe3dd);
+  const scene = new Scene();
+  scene.background = new Color(0xbfe3dd);
   scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
 
-  const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 100);
+  const camera = new PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 100);
   camera.position.set(5, 2, 8);
 
   const controls = new OrbitControls(camera, renderer.domElement);
@@ -40,16 +40,16 @@ onMounted(() => {
   const loader = new GLTFLoader();
   loader.setDRACOLoader(dracoLoader);
   loader.load('./public/model/scene.gltf', function (gltf) {
-    const model: THREE.Group = gltf.scene;
+    const model: Group = gltf.scene;
     model.position.set(0, 0, 0);
     model.scale.set(0.5, 0.5, 0.5);
     scene.add(model);
 
-    mixer = new THREE.AnimationMixer(model);
+    mixer = new AnimationMixer(model);
     mixer.clipAction(gltf.animations[0]).play();
 
     const dragControls = new DragControls(gltf.scene.children, camera, renderer.domElement);
-    const modelBefore = new THREE.Vector3();
+    const modelBefore = new Vector3();
     // 開始拖曳
     dragControls.addEventListener('dragstart', function () {
       modelBefore.copy(model.position);
@@ -57,9 +57,9 @@ onMounted(() => {
     });
     // 拖曳過程
     dragControls.addEventListener('drag', function (event) {
-      const object: THREE.Mesh = event.object;
-      const offset = object.position.divide(new THREE.Vector3(2, 2, 2));
-      model.position.copy(new THREE.Vector3().copy(modelBefore).add(offset));
+      const object: Mesh = event.object;
+      const offset = object.position.divide(new Vector3(2, 2, 2));
+      model.position.copy(new Vector3().copy(modelBefore).add(offset));
       object.position.set(0, 0, 0);
     });
     // 拖曳結束
@@ -72,7 +72,6 @@ onMounted(() => {
   }, undefined, function (e) {
     console.error(e);
   });
-
 
   window.onresize = function () {
     camera.aspect = window.innerWidth / window.innerHeight;
